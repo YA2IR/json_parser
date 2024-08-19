@@ -1,0 +1,23 @@
+{
+  "temperature": 27.43,
+  "pressure": 1.02e5,
+  "coordinates": {
+    "latitude": 45.7621,
+    "longitude": 4.8357e-2
+  },
+  "velocity": 3.8e3,
+  "acceleration": 9.81,
+  "force": 1.23e2,
+  "measurements": {
+    "pH": 7.12,
+    "conductivity": 1.1e-4,
+    "resistance": 2.5e3,
+    "capacitance": 4.7e-8
+  },
+  "time_intervals": [
+    1.5e-3,
+    0.25,
+    5.67e1,
+    8.9e2
+  ]
+}
