@@ -21,4 +21,4 @@ You can find JSON examples in the **examples** directory, and you can find a tes
     - the class that is responsible for parsing the tokens, i.e., making sure they are syntactically correct and converting them into a Python representation
 
 ## Limitation
--It lacks a more specific error handling (no detailed exceptions)
+- It lacks a more specific error handling (no detailed exceptions)
