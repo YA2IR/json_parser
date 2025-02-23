@@ -14,7 +14,7 @@ def test():
 
         assert result1 == result2 # success! 
 
-    print("Assertions Succeed!")
+    print("Assertions Succeeded!")
 
 
 if __name__ == "__main__":

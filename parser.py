@@ -5,112 +5,17 @@ t = Enum("token_t", ["ILLEGAL","LCUR", "RCUR", "LBRACK", "RBRACK", "DQUOTE",
                     "STR", "NUM","TRUE", "FALSE", "NULL", "COLON", "COMMA", "EOF"])
 
 
-class Token:
+class Parser:
 
-    def __init__(self, literal: str, token_t) -> None:
-        self.literal = literal
-        self.type = token_t
-
-    def __str__(self) -> str:
-        return f"<{self.type}  '{self.literal}' )>"
-
-    def __eq__(self, token_t) -> bool:
-        return self.type == token_t
-
-
-class Lexer:
-
-    def __init__(self, inpt: str) -> None: 
-        self.inpt = inpt.replace('\\n', '\n')\
-                        .replace('\\t', '\t')\
-                        .replace('\\"', '"')\
-                        .replace('\\\\', '\\') # TODO: Find a better way to do this
-
-        self.curr_pos: int = 0
-        self.next_pos: int = 0
-        self.char: str = None
-        self.read_char()
-
-    def read_char(self) -> None:
-        # Better than boundary checking imo 
-        try:
-            self.char = self.inpt[self.next_pos]
-            self.curr_pos = self.next_pos
-            self.next_pos += 1
-        except IndexError:
-            self.char = '\0'
-
-    def next_token(self) -> Token:        
-
-        self.consume_ws()
-
-        match self.char:
-            case '"':                
-                self.read_char()            
-                s = self.tokenize_str()
-                tok = Token(s, t.STR)
-                return tok
-            case ',':
-               tok = Token(self.char, t.COMMA)
-            case ':':
-                tok = Token(self.char, t.COLON)
-            case "{":
-                tok = Token(self.char, t.LCUR)
-            case "}":
-                tok = Token(self.char, t.RCUR)
-            case "[":
-               tok = Token(self.char, t.LBRACK)
-            case "]":
-                tok = Token(self.char, t.RBRACK)    
-            case '\0':
-                tok = Token(self.char, t.EOF) 
-
-            case _:
-                if self.char.isnumeric():
-                    s = self.char
-                    self.read_char()
-                    while self.char != "," and self.char != "}" and self.char != "]":
-                        s += self.char
-                        self.read_char()
-                    return Token(s, t.NUM)
-                else:
-                    tok = Token(self.char, t.ILLEGAL)
-
-        self.read_char()
-        return tok
-
-    def tokenize_str(self) -> str:
-        pos = self.curr_pos
-
-        while self.char != '"':
-            try:
-                self.char = self.inpt[self.next_pos]
-                self.next_pos += 1
-            except IndexError:
-                self.char = '\0'
-                self.next_pos -= 1
-                break
-
-        self.read_char()
-
-        return self.inpt[pos:self.curr_pos - 1]
-
-    def consume_ws(self) -> None:
-        while self.char == ' ' or self.char == '\n' or\
-                self.char == '\t' or self.char == '\r':
-            self.read_char()
-
-
-class Parser:    
-
-    def __init__(self, inpt:str):
-        self.l = Lexer(inpt)
+    def __init__(self, text: str):
+        self.l = Lexer(text)
         self.curr_tok: Token = self.l.next_token()
         self.peek_tok: Token = self.l.next_token()
         self.json = {}
 
-    def loads(inpt:str):
-        p = Parser(inpt)
+    @staticmethod
+    def loads(text: str):
+        p = Parser(text)
         return p.parse_value()
 
     def parse_value(self):
@@ -165,8 +70,7 @@ class Parser:
 
         self.expect(t.RBRACK, curr=True)
         return l
-    
-    
+
     def expect(self, token_t, curr=False): 
         """'curr' is an option to check the *current* token rather than the *next* one"""
         if not curr:
@@ -182,4 +86,100 @@ class Parser:
         return self.curr_tok.literal
 
     def parse_num(self):
-        return eval(self.curr_tok.literal.strip())
+        num = self.curr_tok.literal.strip()
+        return int(num) if "." not in num else float(num)
+
+
+class Token:
+
+    def __init__(self, literal: str, token_t) -> None:
+        self.literal = literal
+        self.type = token_t
+
+    def __str__(self) -> str:
+        return f"<{self.type}  '{self.literal}' )>"
+
+    def __eq__(self, token_t) -> bool:
+        return self.type == token_t
+
+
+class Lexer:
+
+    def __init__(self, text: str) -> None: 
+        self.text = text.replace('\\n', '\n')\
+                        .replace('\\t', '\t')\
+                        .replace('\\"', '"')\
+                        .replace('\\\\', '\\') # TODO: Find a better way to do this
+
+        self.curr_pos: int = 0
+        self.next_pos: int = 0
+        self.char: str = None
+        self.read_char()
+
+    def read_char(self) -> None:
+        # Better than boundary checking imo 
+        try:
+            self.char = self.text[self.next_pos]
+            self.curr_pos = self.next_pos
+            self.next_pos += 1
+        except IndexError:
+            self.char = '\0'
+
+    def next_token(self) -> Token:        
+
+        self.consume_ws()
+
+        match self.char:
+            case '"':                
+                self.read_char()            
+                s = self.tokenize_str()
+                tok = Token(s, t.STR)
+                return tok
+            case ',':
+                tok = Token(self.char, t.COMMA)
+            case ':':
+                tok = Token(self.char, t.COLON)
+            case "{":
+                tok = Token(self.char, t.LCUR)
+            case "}":
+                tok = Token(self.char, t.RCUR)
+            case "[":
+                tok = Token(self.char, t.LBRACK)
+            case "]":
+                tok = Token(self.char, t.RBRACK)    
+            case '\0':
+                tok = Token(self.char, t.EOF) 
+
+            case _:
+                if self.char.isnumeric():
+                    s = self.char
+                    self.read_char()
+                    while self.char not in {",", "}","]"}:
+                        s += self.char
+                        self.read_char()
+                    return Token(s, t.NUM)
+                else:
+                    tok = Token(self.char, t.ILLEGAL)
+
+        self.read_char()
+        return tok
+
+    def tokenize_str(self) -> str:
+        pos = self.curr_pos
+
+        while self.char != '"':
+            try:
+                self.char = self.text[self.next_pos]
+                self.next_pos += 1
+            except IndexError:
+                self.char = '\0'
+                self.next_pos -= 1
+                break
+
+        self.read_char()
+
+        return self.text[pos:self.curr_pos - 1]
+
+    def consume_ws(self) -> None:
+        while self.char in {' ', '\n', '\t', '\r'}:
+            self.read_char()
